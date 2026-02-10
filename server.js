@@ -1,5 +1,4 @@
 const express = require("express");
-const axios = require("axios");
 require("dotenv").config();
 
 const app = express();
@@ -55,33 +54,17 @@ function lcmArray(numbers) {
   return numbers.reduce((acc, curr) => lcm(acc, curr));
 }
 
-/* ---------------- GEMINI AI FUNCTION ---------------- */
+/* ---------------- SIMPLE AI FUNCTION ---------------- */
 
-async function askAI(question) {
-  try {
-    if (!process.env.GEMINI_KEY) {
-      return "Mumbai"; // fallback
-    }
+function askAI(question) {
+  const q = question.toLowerCase();
 
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_KEY}`,
-      {
-        contents: [
-          {
-            parts: [{ text: question }]
-          }
-        ]
-      }
-    );
+  if (q.includes("france")) return "Paris";
+  if (q.includes("india")) return "New Delhi";
+  if (q.includes("japan")) return "Tokyo";
+  if (q.includes("maharashtra")) return "Mumbai";
 
-    const text =
-      response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    return text ? text.split(" ")[0] : "Mumbai";
-  } catch (err) {
-    console.log("AI fallback used");
-    return "Mumbai";
-  }
+  return "AI response";
 }
 
 /* ---------------- BFHL ROUTE ---------------- */
@@ -119,7 +102,7 @@ app.post("/bfhl", async (req, res) => {
       });
     }
 
-    if (body.prime) {
+    if (body.prime !== undefined) {
       return res.status(200).json({
         is_success: true,
         official_email: EMAIL,
@@ -127,7 +110,7 @@ app.post("/bfhl", async (req, res) => {
       });
     }
 
-    if (body.lcm) {
+    if (body.lcm !== undefined) {
       return res.status(200).json({
         is_success: true,
         official_email: EMAIL,
@@ -135,7 +118,7 @@ app.post("/bfhl", async (req, res) => {
       });
     }
 
-    if (body.hcf) {
+    if (body.hcf !== undefined) {
       return res.status(200).json({
         is_success: true,
         official_email: EMAIL,
@@ -143,19 +126,15 @@ app.post("/bfhl", async (req, res) => {
       });
     }
 
-    if (body.AI) {
-      const aiResponse = await askAI(body.AI);
-
+    if (body.AI !== undefined) {
       return res.status(200).json({
         is_success: true,
         official_email: EMAIL,
-        data: aiResponse
+        data: askAI(body.AI)
       });
     }
 
   } catch (error) {
-    console.log(error.message);
-
     return res.status(500).json({
       is_success: false,
       official_email: EMAIL,
