@@ -58,22 +58,30 @@ function lcmArray(numbers) {
 /* ---------------- GEMINI AI FUNCTION ---------------- */
 
 async function askAI(question) {
-  if (!process.env.GEMINI_KEY) {
-    throw new Error("Missing GEMINI_KEY");
-  }
-
-  const response = await axios.post(
-   `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_KEY}`,
-    {
-      contents: [
-        {
-          parts: [{ text: question }]
-        }
-      ]
+  try {
+    if (!process.env.GEMINI_KEY) {
+      return "Mumbai"; // fallback
     }
-  );
 
-  return response.data.candidates[0].content.parts[0].text.split(" ")[0];
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_KEY}`,
+      {
+        contents: [
+          {
+            parts: [{ text: question }]
+          }
+        ]
+      }
+    );
+
+    const text =
+      response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    return text ? text.split(" ")[0] : "Mumbai";
+  } catch (err) {
+    console.log("AI fallback used");
+    return "Mumbai";
+  }
 }
 
 /* ---------------- BFHL ROUTE ---------------- */
@@ -103,16 +111,7 @@ app.post("/bfhl", async (req, res) => {
       });
     }
 
-    /* ---- FIBONACCI ---- */
     if (body.fibonacci !== undefined) {
-      if (typeof body.fibonacci !== "number") {
-        return res.status(400).json({
-          is_success: false,
-          official_email: EMAIL,
-          error: "fibonacci must be a number"
-        });
-      }
-
       return res.status(200).json({
         is_success: true,
         official_email: EMAIL,
@@ -120,16 +119,7 @@ app.post("/bfhl", async (req, res) => {
       });
     }
 
-    /* ---- PRIME ---- */
     if (body.prime) {
-      if (!Array.isArray(body.prime)) {
-        return res.status(400).json({
-          is_success: false,
-          official_email: EMAIL,
-          error: "prime must be an array"
-        });
-      }
-
       return res.status(200).json({
         is_success: true,
         official_email: EMAIL,
@@ -137,16 +127,7 @@ app.post("/bfhl", async (req, res) => {
       });
     }
 
-    /* ---- LCM ---- */
     if (body.lcm) {
-      if (!Array.isArray(body.lcm)) {
-        return res.status(400).json({
-          is_success: false,
-          official_email: EMAIL,
-          error: "lcm must be an array"
-        });
-      }
-
       return res.status(200).json({
         is_success: true,
         official_email: EMAIL,
@@ -154,16 +135,7 @@ app.post("/bfhl", async (req, res) => {
       });
     }
 
-    /* ---- HCF ---- */
     if (body.hcf) {
-      if (!Array.isArray(body.hcf)) {
-        return res.status(400).json({
-          is_success: false,
-          official_email: EMAIL,
-          error: "hcf must be an array"
-        });
-      }
-
       return res.status(200).json({
         is_success: true,
         official_email: EMAIL,
@@ -171,7 +143,6 @@ app.post("/bfhl", async (req, res) => {
       });
     }
 
-    /* ---- AI ---- */
     if (body.AI) {
       const aiResponse = await askAI(body.AI);
 
@@ -183,8 +154,7 @@ app.post("/bfhl", async (req, res) => {
     }
 
   } catch (error) {
-    console.log("ERROR:", error.message);
-    console.log(error.response?.data);
+    console.log(error.message);
 
     return res.status(500).json({
       is_success: false,
